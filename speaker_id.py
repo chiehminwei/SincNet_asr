@@ -24,7 +24,8 @@ import numpy as np
 from dnn_models import MLP,flip
 from dnn_models import SincNet as CNN 
 from data_io import ReadList,read_conf,str_to_bool
-
+from tqdm import tqdm
+from datetime import datetime
 
 def create_batches_rnd(batch_size,data_folder,wav_lst,N_snt,wlen,lab_dict,fact_amp):
     
@@ -211,7 +212,7 @@ optimizer_DNN1 = optim.RMSprop(DNN1_net.parameters(), lr=lr,alpha=0.95, eps=1e-8
 optimizer_DNN2 = optim.RMSprop(DNN2_net.parameters(), lr=lr,alpha=0.95, eps=1e-8) 
 
 
-
+print('***Started training at {}***'.format(datetime.now()))
 for epoch in range(N_epochs):
   
   test_flag=0
@@ -222,7 +223,7 @@ for epoch in range(N_epochs):
   loss_sum=0
   err_sum=0
 
-  for i in range(N_batches):
+  for i in tqdm(range(N_batches)):
 
     [inp,lab]=create_batches_rnd(batch_size,data_folder,wav_lst_tr,snt_tr,wlen,lab_dict,0.2)
     pout=DNN2_net(DNN1_net(CNN_net(inp)))
