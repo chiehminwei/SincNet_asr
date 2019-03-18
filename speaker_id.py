@@ -26,6 +26,7 @@ from dnn_models import SincNet as CNN
 from data_io import ReadList,read_conf,str_to_bool
 from tqdm import tqdm
 from datetime import datetime
+import subprocess
 
 def create_batches_rnd(batch_size,data_folder,wav_lst,N_snt,wlen,lab_dict,fact_amp):
     
@@ -211,7 +212,7 @@ optimizer_CNN = optim.RMSprop(CNN_net.parameters(), lr=lr,alpha=0.95, eps=1e-8)
 optimizer_DNN1 = optim.RMSprop(DNN1_net.parameters(), lr=lr,alpha=0.95, eps=1e-8) 
 optimizer_DNN2 = optim.RMSprop(DNN2_net.parameters(), lr=lr,alpha=0.95, eps=1e-8) 
 
-
+best_validate = float('inf')
 print('***Started training at {}***'.format(datetime.now()))
 for epoch in range(N_epochs):
   
@@ -253,85 +254,92 @@ for epoch in range(N_epochs):
  
    
    
-# Full Validation  new  
-  if epoch%N_eval_epoch==0:
-      
-   CNN_net.eval()
-   DNN1_net.eval()
-   DNN2_net.eval()
-   test_flag=1 
-   loss_sum=0
-   err_sum=0
-   err_sum_snt=0
-   
-   with torch.no_grad():  
-    for i in range(snt_te):
-       
-     #[fs,signal]=scipy.io.wavfile.read(data_folder+wav_lst_te[i])
-     #signal=signal.astype(float)/32768
-
-     [signal, fs] = sf.read(data_folder+wav_lst_te[i])
-
-     signal=torch.from_numpy(signal).float().cuda().contiguous()
-     lab_batch=lab_dict[wav_lst_te[i]]
-    
-     # split signals into chunks
-     beg_samp=0
-     end_samp=wlen
+# Full Validation  new        
+ CNN_net.eval()
+ DNN1_net.eval()
+ DNN2_net.eval()
+ test_flag=1 
+ loss_sum=0
+ err_sum=0
+ err_sum_snt=0
+ 
+ with torch.no_grad():  
+  for i in range(snt_te):
      
-     N_fr=int((signal.shape[0]-wlen)/(wshift))
-     
+   #[fs,signal]=scipy.io.wavfile.read(data_folder+wav_lst_te[i])
+   #signal=signal.astype(float)/32768
 
-     sig_arr=torch.zeros([Batch_dev,wlen]).float().cuda().contiguous()
-     lab= Variable((torch.zeros(N_fr+1)+lab_batch).cuda().contiguous().long())
-     pout=Variable(torch.zeros(N_fr+1,class_lay[-1]).float().cuda().contiguous())
-     count_fr=0
-     count_fr_tot=0
-     while end_samp<signal.shape[0]:
-         sig_arr[count_fr,:]=signal[beg_samp:end_samp]
-         beg_samp=beg_samp+wshift
-         end_samp=beg_samp+wlen
-         count_fr=count_fr+1
-         count_fr_tot=count_fr_tot+1
-         if count_fr==Batch_dev:
-             inp=Variable(sig_arr)
-             pout[count_fr_tot-Batch_dev:count_fr_tot,:]=DNN2_net(DNN1_net(CNN_net(inp)))
-             count_fr=0
-             sig_arr=torch.zeros([Batch_dev,wlen]).float().cuda().contiguous()
+   [signal, fs] = sf.read(data_folder+wav_lst_te[i])
+
+   signal=torch.from_numpy(signal).float().cuda().contiguous()
+   lab_batch=lab_dict[wav_lst_te[i]]
+  
+   # split signals into chunks
+   beg_samp=0
+   end_samp=wlen
    
-     if count_fr>0:
-      inp=Variable(sig_arr[0:count_fr])
-      pout[count_fr_tot-count_fr:count_fr_tot,:]=DNN2_net(DNN1_net(CNN_net(inp)))
+   N_fr=int((signal.shape[0]-wlen)/(wshift))
+   
 
-    
-     pred=torch.max(pout,dim=1)[1]
-     loss = cost(pout, lab.long())
-     err = torch.mean((pred!=lab.long()).float())
-    
-     [val,best_class]=torch.max(torch.sum(pout,dim=0),0)
-     err_sum_snt=err_sum_snt+(best_class!=lab[0]).float()
-    
-    
-     loss_sum=loss_sum+loss.detach()
-     err_sum=err_sum+err.detach()
-    
-    err_tot_dev_snt=err_sum_snt/snt_te
-    loss_tot_dev=loss_sum/snt_te
-    err_tot_dev=err_sum/snt_te
+   sig_arr=torch.zeros([Batch_dev,wlen]).float().cuda().contiguous()
+   lab= Variable((torch.zeros(N_fr+1)+lab_batch).cuda().contiguous().long())
+   pout=Variable(torch.zeros(N_fr+1,class_lay[-1]).float().cuda().contiguous())
+   count_fr=0
+   count_fr_tot=0
+   while end_samp<signal.shape[0]:
+       sig_arr[count_fr,:]=signal[beg_samp:end_samp]
+       beg_samp=beg_samp+wshift
+       end_samp=beg_samp+wlen
+       count_fr=count_fr+1
+       count_fr_tot=count_fr_tot+1
+       if count_fr==Batch_dev:
+           inp=Variable(sig_arr)
+           pout[count_fr_tot-Batch_dev:count_fr_tot,:]=DNN2_net(DNN1_net(CNN_net(inp)))
+           count_fr=0
+           sig_arr=torch.zeros([Batch_dev,wlen]).float().cuda().contiguous()
+ 
+   if count_fr>0:
+    inp=Variable(sig_arr[0:count_fr])
+    pout[count_fr_tot-count_fr:count_fr_tot,:]=DNN2_net(DNN1_net(CNN_net(inp)))
 
   
-   print("epoch %i, loss_tr=%f err_tr=%f loss_te=%f err_te=%f err_te_snt=%f" % (epoch, loss_tot,err_tot,loss_tot_dev,err_tot_dev,err_tot_dev_snt))
+   pred=torch.max(pout,dim=1)[1]
+   loss = cost(pout, lab.long())
+   err = torch.mean((pred!=lab.long()).float())
   
-   with open(output_folder+"/res.res", "a") as res_file:
-    res_file.write("epoch %i, loss_tr=%f err_tr=%f loss_te=%f err_te=%f err_te_snt=%f\n" % (epoch, loss_tot,err_tot,loss_tot_dev,err_tot_dev,err_tot_dev_snt))   
+   [val,best_class]=torch.max(torch.sum(pout,dim=0),0)
+   err_sum_snt=err_sum_snt+(best_class!=lab[0]).float()
+  
+  
+   loss_sum=loss_sum+loss.detach()
+   err_sum=err_sum+err.detach()
+  
+  err_tot_dev_snt=err_sum_snt/snt_te
+  loss_tot_dev=loss_sum/snt_te
+  err_tot_dev=err_sum/snt_te
 
+  if err_tot_dev <= best_validate:
+   best_validate = err_tot_dev
    checkpoint={'CNN_model_par': CNN_net.state_dict(),
-               'DNN1_model_par': DNN1_net.state_dict(),
-               'DNN2_model_par': DNN2_net.state_dict(),
-               }
-   torch.save(checkpoint,output_folder+'/model_raw.pkl')
-  
-  else:
-   print("epoch %i, loss_tr=%f err_tr=%f" % (epoch, loss_tot,err_tot))
+             'DNN1_model_par': DNN1_net.state_dict(),
+             'DNN2_model_par': DNN2_net.state_dict(),
+             'epoch': epoch,
+             'best_validate': best_validate,
+             }
+   torch.save(checkpoint,output_folder+'/model_best.pkl')
+   subprocess.call(['gsutil', 'cp', output_folder+'/model_best.pkl', 'gs://edinquake/asr/SincNet_TIMIT/model_best.pkl'])
 
 
+
+ print("epoch %i, loss_tr=%f err_tr=%f loss_te=%f err_te=%f err_te_snt=%f" % (epoch, loss_tot,err_tot,loss_tot_dev,err_tot_dev,err_tot_dev_snt))
+
+ with open(output_folder+"/res.res", "a") as res_file:
+  res_file.write("epoch %i, loss_tr=%f err_tr=%f loss_te=%f err_te=%f err_te_snt=%f\n" % (epoch, loss_tot,err_tot,loss_tot_dev,err_tot_dev,err_tot_dev_snt))   
+
+ checkpoint={'CNN_model_par': CNN_net.state_dict(),
+             'DNN1_model_par': DNN1_net.state_dict(),
+             'DNN2_model_par': DNN2_net.state_dict(),
+             'epoch': epoch,
+             'best_validate': best_validate,
+             }
+ torch.save(checkpoint,output_folder+'/model_last.pkl')
