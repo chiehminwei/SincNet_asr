@@ -517,7 +517,7 @@ class ConvNet(nn.Module):
           
 
       if i==0:
-        self.conv.append(nn.Conv1d(8, self.cnn_N_filt[i], self.cnn_len_filt[i]))
+        self.conv.append(nn.Conv1d(1, self.cnn_N_filt[i], self.cnn_len_filt[i]))
             
       else:
         self.conv.append(nn.Conv1d(self.cnn_N_filt[i-1], self.cnn_N_filt[i], self.cnn_len_filt[i]))
