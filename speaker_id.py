@@ -21,9 +21,9 @@ from torch.autograd import Variable
 
 import sys
 import numpy as np
-# from dnn_models import MLP,flip
+from dnn_models import MLP,flip
 from dnn_models import SincNet as CNN 
-from dnn_models import ConvNet as CNN
+# from dnn_models import ConvNet as CNN
 from data_io import ReadList,read_conf,str_to_bool
 from tqdm import tqdm
 from datetime import datetime
