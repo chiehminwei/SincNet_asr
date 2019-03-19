@@ -459,7 +459,7 @@ for epoch in range(last_epoch + 1, N_epochs):
              'best_validate': best_validate,
              }
       torch.save(checkpoint,output_folder+'/model_best.pkl')
-      subprocess.call(['gsutil', 'cp', output_folder+'/model_best.pkl', 'gs://edinquake/asr/SincNet_TIMIT_window/model_best.pkl'])
+      subprocess.call(['gsutil', 'cp', output_folder+'/model_best.pkl', 'gs://edinquake/asr/ConvNet_TIMIT_window/model_best.pkl'])
 
 
 
