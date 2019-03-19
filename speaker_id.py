@@ -292,11 +292,18 @@ if pt_file!='none':
             segment_embeddings.append(embeddings.numpy())
 
           # Produce the segment d vector, apply L2 norm then average
-          # segment_embeddings = np.concatenate(segment_embeddings, axis=0)
-          # segment_embeddings_norm2 = normalize(segment_embeddings)
-          # segment_embedding = np.average(segment_embeddings_norm2, axis=0)
-          # train_sequence.append(segment_embedding)
-          
+          segment_embeddings = np.concatenate(segment_embeddings, axis=0)
+          print(segment_embeddings.shape)
+          segment_embeddings_norm2 = normalize(segment_embeddings)
+          print(segment_embeddings_norm2.shape)
+          segment_embedding = np.average(segment_embeddings_norm2, axis=0)
+          print(segment_embedding.shape)
+          train_sequence.append(segment_embedding)
+          print(train_sequence)
+          assert 1 == 2
+          train_cluster_id.append(str(label))
+          # 42597 vs 4415
+          # 121032 vs 13186
           # Each segment has one d vector
           for shii in segment_embeddings:
             train_sequence.append(shii)
