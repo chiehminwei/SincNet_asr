@@ -318,6 +318,8 @@ if pt_file!='none':
     label = label + 1
     
     if not train_saved and i > train_speaker_num:
+      continue
+      
       train_sequence = np.concatenate(np.asarray(train_sequence), axis=0)
       train_cluster_id = np.asarray(train_cluster_id)
       np.save('train_sequence',train_sequence)
