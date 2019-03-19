@@ -238,7 +238,8 @@ except:
 
 if pt_file!='none':
   #dataset path
-  unprocessed_data = '../wtf_timit/*/*/*/*.wav'
+  # unprocessed_data = '../wtf_timit/*/*/*/*.wav'
+  unprocessed_data = '../ASR19_ALL/*/*.wav'
   audio_path = glob.glob(os.path.dirname(unprocessed_data))  
 
   total_speaker_num = len(audio_path)
@@ -250,6 +251,8 @@ if pt_file!='none':
   count = 0 
   train_saved = False
   for i, folder in enumerate(audio_path):
+    if not os.path.isdir(folder):
+      continue
     for file in os.listdir(folder):
       if file[-4:] == '.wav':
         times, segs = VAD_chunk(2, folder+'/'+file)
