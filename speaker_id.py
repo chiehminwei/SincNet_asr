@@ -258,8 +258,6 @@ if pt_file!='none':
         for seg in concat_seg:
           # Each segment has one d vector
           train_cluster_id.append(str(label))
-          if label == 0:
-            print(label)
           # To calculate the segment embedding
           segment_embeddings = []
           
@@ -286,14 +284,12 @@ if pt_file!='none':
               inp = Variable(sig_arr)
               embeddings = DNN1_net(CNN_net(inp)).to(torch.device("cpu")).detach()
               p2 = DNN2_net(DNN1_net(CNN_net(inp))).to(torch.device("cpu")).detach()
-              print('yeet')
               segment_embeddings.append(embeddings.numpy())
               count_fr = 0
               sig_arr = torch.zeros([Batch_dev,wlen]).float().cuda().contiguous()
 
           if count_fr > 0:
             inp = Variable(sig_arr[0:count_fr])
-            print('yeet2')
             embeddings = DNN1_net(CNN_net(inp)).to(torch.device("cpu")).detach()
             segment_embeddings.append(embeddings.numpy())
 
