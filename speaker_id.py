@@ -258,7 +258,6 @@ if pt_file!='none':
         for seg in concat_seg:
           # Each segment has one d vector
           train_cluster_id.append(str(label))
-          print(str(label))
           # To calculate the segment embedding
           segment_embeddings = []
           
