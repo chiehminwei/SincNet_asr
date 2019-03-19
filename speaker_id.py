@@ -227,6 +227,9 @@ try:
   DNN2_net.load_state_dict(checkpoint_load['DNN2_model_par'])
   last_epoch = checkpoint_load['epoch']
   best_validate = checkpoint_load['best_validate']
+  print('Checkpoint restored.')
+  print('Num_epochs: {}'.format(last_epoch))
+  print('Best validation loss: {}'.format(best_validate))
 
 except:
   pass
