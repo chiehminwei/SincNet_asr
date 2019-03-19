@@ -236,7 +236,7 @@ except:
 
 if pt_file!='none':
   #dataset path
-  unprocessed_data = '/Users/Jimmy/baseline/wtf_timit/*/*/*/*.wav'
+  unprocessed_data = 'wtf_timit/*/*/*/*.wav'
   audio_path = glob.glob(os.path.dirname(unprocessed_data))  
 
   total_speaker_num = len(audio_path)
