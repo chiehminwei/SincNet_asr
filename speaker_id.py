@@ -284,29 +284,21 @@ if pt_file!='none':
             count_fr_tot += 1
             if count_fr == Batch_dev:
               inp = Variable(sig_arr)
-              print(inp.shape)
               embeddings = DNN1_net(CNN_net(inp)).to(torch.device("cpu")).detach()
               p2 = DNN2_net(DNN1_net(CNN_net(inp))).to(torch.device("cpu")).detach()
               print('yeet')
-              print(embeddings.shape)
-              print(p2.shape)
               segment_embeddings.append(embeddings.numpy())
-              
               count_fr = 0
               sig_arr = torch.zeros([Batch_dev,wlen]).float().cuda().contiguous()
 
           if count_fr > 0:
             inp = Variable(sig_arr[0:count_fr])
-            print(inp.shape)
             print('yeet2')
             embeddings = DNN1_net(CNN_net(inp)).to(torch.device("cpu")).detach()
-            p2 = DNN2_net(DNN1_net(CNN_net(inp))).to(torch.device("cpu")).detach()
-            print(embeddings.shape)
-            print(p2.shape)
             segment_embeddings.append(embeddings.numpy())
 
           # Produce the segment d vector, apply L2 norm then average
-          print(np.array(segment_embeddings).shape)
+          segment_embeddings = np.concatenate(segment_embeddings, axis=0)
           segment_embeddings_norm2 = normalize(segment_embeddings)
           segment_embedding = np.average(segment_embeddings_norm2, axis=0)
           train_sequence.append(segment_embedding)
