@@ -258,6 +258,8 @@ if pt_file!='none':
         for seg in concat_seg:
           # Each segment has one d vector
           train_cluster_id.append(str(label))
+          if label == 0:
+            print(label)
           # To calculate the segment embedding
           segment_embeddings = []
           
@@ -294,6 +296,7 @@ if pt_file!='none':
             segment_embeddings.append(embeddings.numpy())
 
           # Produce the segment d vector, apply L2 norm then average
+          print(np.array(segment_embeddings).shape)
           segment_embeddings_norm2 = normalize(segment_embeddings)
           segment_embedding = np.average(segment_embeddings_norm2, axis=0)
           train_sequence.append(segment_embedding)
