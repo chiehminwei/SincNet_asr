@@ -255,7 +255,7 @@ if pt_file!='none':
           print('No voice activity detected')
           continue
         concat_seg = concat_segs(times, segs)
-        for seg in concat_seg:
+        for seg in segs:
           # To calculate the segment embedding
           segment_embeddings = []
           
