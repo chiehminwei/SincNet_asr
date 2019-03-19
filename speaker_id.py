@@ -299,8 +299,11 @@ if pt_file!='none':
           
           # Each segment has one d vector
           for shii in segment_embeddings:
-            train_sequence.append(shii)
-            train_cluster_id.append(str(label))
+            train_sequence.extend(shii)
+            train_cluster_id.extend([str(label)] * shii.shape[0])
+          print(train_sequence)
+          print(train_cluster_id)
+          assert 1 == 2
 
         count = count + 1
         if count % 100 == 0:
