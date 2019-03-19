@@ -299,11 +299,8 @@ if pt_file!='none':
           
           # Each segment has one d vector
           for shii in segment_embeddings:
-            train_sequence.extend(shii)
+            train_sequence.append(shii)
             train_cluster_id.extend([str(label)] * shii.shape[0])
-          print(train_sequence)
-          print(train_cluster_id)
-          assert 1 == 2
 
         count = count + 1
         if count % 100 == 0:
@@ -312,7 +309,7 @@ if pt_file!='none':
     label = label + 1
     
     if not train_saved and i > train_speaker_num:
-      train_sequence = np.asarray(train_sequence)
+      train_sequence = np.concatenate(np.asarray(train_sequence), axis=0)
       train_cluster_id = np.asarray(train_cluster_id)
       np.save('train_sequence',train_sequence)
       np.save('train_cluster_id',train_cluster_id)
