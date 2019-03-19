@@ -22,7 +22,7 @@ from torch.autograd import Variable
 import sys
 import numpy as np
 from dnn_models import MLP,flip
-from dnn_models import ConvNet as CNN 
+from dnn_models import SincNet as CNN 
 from data_io import ReadList,read_conf,str_to_bool
 from tqdm import tqdm
 from datetime import datetime
@@ -220,7 +220,7 @@ DNN2_net.cuda()
 best_validate = float('inf')
 last_epoch = -1
 try:
-  subprocess.call(['gsutil', 'cp', 'gs://edinquake/asr/ConvcNet_TIMIT_window/model_best.pkl', 'model_best.pkl'], stdout=FNULL, stderr=subprocess.STDOUT)
+  subprocess.call(['gsutil', 'cp', 'gs://edinquake/asr/SincNet_TIMIT/model_best.pkl', 'model_best.pkl'], stdout=FNULL, stderr=subprocess.STDOUT)
   checkpoint_load = torch.load('model_best.pkl', map_location=lambda s, l: default_restore_location(s, 'cpu'))
   CNN_net.load_state_dict(checkpoint_load['CNN_model_par'])
   DNN1_net.load_state_dict(checkpoint_load['DNN1_model_par'])
@@ -314,6 +314,7 @@ if pt_file!='none':
   train_cluster_id = np.asarray(train_cluster_id)
   np.save('test_sequence',train_sequence)
   np.save('test_cluster_id',train_cluster_id)
+  quit()
 
 
 
@@ -432,7 +433,7 @@ for epoch in range(last_epoch + 1, N_epochs):
              'best_validate': best_validate,
              }
       torch.save(checkpoint,output_folder+'/model_best.pkl')
-      subprocess.call(['gsutil', 'cp', output_folder+'/model_best.pkl', 'gs://edinquake/asr/ConvNet_TIMIT_window/model_best.pkl'])
+      subprocess.call(['gsutil', 'cp', output_folder+'/model_best.pkl', 'gs://edinquake/asr/SincNet_TIMIT/model_best.pkl'])
 
 
 
