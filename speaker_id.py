@@ -292,9 +292,9 @@ if pt_file!='none':
             segment_embeddings.append(embeddings.numpy())
 
           # Produce the segment d vector, apply L2 norm then average
-          segment_embeddings = np.concatenate(segment_embeddings, axis=0)
-          segment_embeddings_norm2 = normalize(segment_embeddings)
-          segment_embedding = np.average(segment_embeddings_norm2, axis=0)
+          # segment_embeddings = np.concatenate(segment_embeddings, axis=0)
+          # segment_embeddings_norm2 = normalize(segment_embeddings)
+          # segment_embedding = np.average(segment_embeddings_norm2, axis=0)
           # train_sequence.append(segment_embedding)
           
           # Each segment has one d vector
