@@ -284,8 +284,10 @@ if pt_file!='none':
             count_fr_tot += 1
             if count_fr == Batch_dev:
               inp = Variable(sig_arr)
+              print(inp.shape)
               embeddings = DNN1_net(CNN_net(inp)).to(torch.device("cpu")).detach()
               p2 = DNN2_net(DNN1_net(CNN_net(inp))).to(torch.device("cpu")).detach()
+              print('yeet')
               print(embeddings.shape)
               print(p2.shape)
               segment_embeddings.append(embeddings.numpy())
@@ -295,6 +297,8 @@ if pt_file!='none':
 
           if count_fr > 0:
             inp = Variable(sig_arr[0:count_fr])
+            print(inp.shape)
+            print('yeet2')
             embeddings = DNN1_net(CNN_net(inp)).to(torch.device("cpu")).detach()
             p2 = DNN2_net(DNN1_net(CNN_net(inp))).to(torch.device("cpu")).detach()
             print(embeddings.shape)
