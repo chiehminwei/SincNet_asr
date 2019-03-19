@@ -293,21 +293,16 @@ if pt_file!='none':
 
           # Produce the segment d vector, apply L2 norm then average
           segment_embeddings = np.concatenate(segment_embeddings, axis=0)
-          print(segment_embeddings.shape)
           segment_embeddings_norm2 = normalize(segment_embeddings)
-          print(segment_embeddings_norm2.shape)
           segment_embedding = np.average(segment_embeddings_norm2, axis=0)
-          print(segment_embedding.shape)
           train_sequence.append(segment_embedding)
-          print(train_sequence)
-          assert 1 == 2
           train_cluster_id.append(str(label))
           # 42597 vs 4415
           # 121032 vs 13186
           # Each segment has one d vector
-          for shii in segment_embeddings:
-            train_sequence.append(shii)
-            train_cluster_id.extend([str(label)] * shii.shape[0])
+          # for shii in segment_embeddings:
+          #   train_sequence.append(shii)
+          #   train_cluster_id.extend([str(label)] * shii.shape[0])
 
         count = count + 1
         if count % 100 == 0:
@@ -316,7 +311,7 @@ if pt_file!='none':
     label = label + 1
     
     if not train_saved and i > train_speaker_num:
-      train_sequence = np.concatenate(np.asarray(train_sequence), axis=0)
+      train_sequence = np.asarray(train_sequence)
       train_cluster_id = np.asarray(train_cluster_id)
       np.save('train_sequence',train_sequence)
       np.save('train_cluster_id',train_cluster_id)
@@ -324,7 +319,7 @@ if pt_file!='none':
       train_sequence = []
       train_cluster_id = []
           
-  train_sequence = np.concatenate(train_sequence, axis=0)
+  train_sequence = np.asarray(train_sequence)
   train_cluster_id = np.asarray(train_cluster_id)
   np.save('test_sequence',train_sequence)
   np.save('test_cluster_id',train_cluster_id)
