@@ -283,7 +283,7 @@ if pt_file!='none':
             if count_fr == Batch_dev:
               inp = Variable(sig_arr)
               embeddings = DNN1_net(CNN_net(inp))
-              segment_embeddings.append(embeddings)
+              segment_embeddings.append(embeddings.detach().numpy())
               
               count_fr = 0
               sig_arr = torch.zeros([Batch_dev,wlen]).float().cuda().contiguous()
@@ -291,7 +291,7 @@ if pt_file!='none':
           if count_fr > 0:
             inp = Variable(sig_arr[0:count_fr])
             embeddings = DNN1_net(CNN_net(inp))
-            segment_embeddings.append(embeddings)
+            segment_embeddings.append(embeddings.detach().numpy())
 
           # Produce the segment d vector, apply L2 norm then average
           segment_embeddings_norm2 = normalize(segment_embeddings)
