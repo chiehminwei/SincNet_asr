@@ -16,7 +16,7 @@ import wave
 
 import webrtcvad
 
-from hparam import hparam as hp
+SR = 16000
 
 def read_wave(path, sr):
     """Reads a .wav file.
@@ -128,11 +128,11 @@ def vad_collector(sample_rate, frame_duration_ms,
 
 
 def VAD_chunk(aggressiveness, path):
-    audio, byte_audio = read_wave(path, hp.data.sr)
+    audio, byte_audio = read_wave(path, SR)
     vad = webrtcvad.Vad(int(aggressiveness))
-    frames = frame_generator(20, byte_audio, hp.data.sr)
+    frames = frame_generator(20, byte_audio, hSR)
     frames = list(frames)
-    times = vad_collector(hp.data.sr, 20, 200, vad, frames)
+    times = vad_collector(SR, 20, 200, vad, frames)
     speech_times = []
     speech_segs = []
     for i, time in enumerate(times):
@@ -142,11 +142,11 @@ def VAD_chunk(aggressiveness, path):
         while j + .4 < end:
             end_j = np.round(j+.4,decimals=2)
             speech_times.append((j, end_j))
-            speech_segs.append(audio[int(j*hp.data.sr):int(end_j*hp.data.sr)])
+            speech_segs.append(audio[int(j*SR):int(end_j*SR)])
             j = end_j
         else:
             speech_times.append((j, end))
-            speech_segs.append(audio[int(j*hp.data.sr):int(end*hp.data.sr)])
+            speech_segs.append(audio[int(j*SR):int(end*SR)])
     return speech_times, speech_segs
 
 if __name__ == '__main__':
