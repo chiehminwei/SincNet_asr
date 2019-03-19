@@ -256,8 +256,6 @@ if pt_file!='none':
           continue
         concat_seg = concat_segs(times, segs)
         for seg in concat_seg:
-          # Each segment has one d vector
-          train_cluster_id.append(str(label))
           # To calculate the segment embedding
           segment_embeddings = []
           
@@ -297,7 +295,12 @@ if pt_file!='none':
           segment_embeddings = np.concatenate(segment_embeddings, axis=0)
           segment_embeddings_norm2 = normalize(segment_embeddings)
           segment_embedding = np.average(segment_embeddings_norm2, axis=0)
-          train_sequence.append(segment_embedding)
+          # train_sequence.append(segment_embedding)
+          
+          # Each segment has one d vector
+          for shii in segment_embeddings:
+            train_sequence.append(shii)
+            train_cluster_id.append(str(label))
 
         count = count + 1
         if count % 100 == 0:
@@ -306,7 +309,7 @@ if pt_file!='none':
     label = label + 1
     
     if not train_saved and i > train_speaker_num:
-      train_sequence = np.concatenate(train_sequence, axis=0)
+      train_sequence = np.asarray(train_sequence)
       train_cluster_id = np.asarray(train_cluster_id)
       np.save('train_sequence',train_sequence)
       np.save('train_cluster_id',train_cluster_id)
