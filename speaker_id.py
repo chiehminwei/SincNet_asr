@@ -285,6 +285,7 @@ if pt_file!='none':
             if count_fr == Batch_dev:
               inp = Variable(sig_arr)
               embeddings = DNN1_net(CNN_net(inp)).to(torch.device("cpu")).detach()
+              print(embeddings.shape)
               segment_embeddings.append(embeddings.numpy())
               
               count_fr = 0
@@ -293,6 +294,7 @@ if pt_file!='none':
           if count_fr > 0:
             inp = Variable(sig_arr[0:count_fr])
             embeddings = DNN1_net(CNN_net(inp)).to(torch.device("cpu")).detach()
+            print(embeddings.shape)
             segment_embeddings.append(embeddings.numpy())
 
           # Produce the segment d vector, apply L2 norm then average
