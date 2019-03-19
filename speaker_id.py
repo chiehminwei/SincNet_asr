@@ -263,8 +263,8 @@ if pt_file!='none':
           
           signal = torch.from_numpy(seg).float().cuda().contiguous()
           # split signals into chunks
-          wlen = int(fs * 250 / 1000.00)
-          wshift = int(fs * 125 / 1000.00)
+          wlen = int(fs * 240 / 1000.00)
+          wshift = int(fs * 120 / 1000.00)
 
           beg_samp = 0
           end_samp = wlen
@@ -289,6 +289,8 @@ if pt_file!='none':
               sig_arr = torch.zeros([Batch_dev,wlen]).float().cuda().contiguous()
 
           if count_fr > 0:
+            if count_fr == 1:
+              continue
             inp = Variable(sig_arr[0:count_fr])
             embeddings = DNN1_net(CNN_net(inp)).to(torch.device("cpu")).detach()
             segment_embeddings.append(embeddings.numpy())
