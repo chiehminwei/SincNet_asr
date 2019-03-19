@@ -33,7 +33,8 @@ import glob
 
 import librosa
 from VAD_segments import VAD_chunk
-  
+from sklearn.preprocessing import normalize  
+
 def create_batches_rnd(batch_size,data_folder,wav_lst,N_snt,wlen,lab_dict,fact_amp):
     
  # Initialization of the minibatch (batch_size,[0=>x_t,1=>x_t+N,1=>random_samp])
@@ -65,7 +66,19 @@ def create_batches_rnd(batch_size,data_folder,wav_lst,N_snt,wlen,lab_dict,fact_a
   
  return inp,lab  
 
-
+def concat_segs(times, segs):
+  #Concatenate continuous voiced segments
+  concat_seg = []
+  seg_concat = segs[0]
+  for i in range(0, len(times)-1):
+    if times[i][1] == times[i+1][0]:
+      seg_concat = np.concatenate((seg_concat, segs[i+1]))
+    else:
+      concat_seg.append(seg_concat)
+      seg_concat = segs[i+1]
+  else:
+    concat_seg.append(seg_concat)
+  return concat_seg
 
 # Reading cfg file
 options=read_conf()
@@ -219,47 +232,8 @@ except:
   pass
 
 if pt_file!='none':
-
-
-  def get_STFTs(segs):
-    #Get 240ms STFT windows with 50% overlap
-    sr = hp.data.sr
-    STFT_frames = []
-    for seg in segs:
-      S = librosa.core.stft(y=seg, n_fft=hp.data.nfft,
-                            win_length=int(hp.data.window * sr), hop_length=int(hp.data.hop * sr))
-      S = np.abs(S)**2
-      mel_basis = librosa.filters.mel(sr, n_fft=hp.data.nfft, n_mels=hp.data.nmels)
-      S = np.log10(np.dot(mel_basis, S) + 1e-6)           # log mel spectrogram of utterances
-      for j in range(0, S.shape[1], int(.12/hp.data.hop)):
-        if j + 24 < S.shape[1]:
-          STFT_frames.append(S[:,j:j+24])
-        else:
-          break
-    return STFT_frames
-
-  def align_embeddings(embeddings):
-    partitions = []
-    start = 0
-    end = 0
-    j = 1
-    for i, embedding in enumerate(embeddings):
-      if (i*.12)+.24 < j*.401:
-        end = end + 1
-      else:
-        partitions.append((start,end))
-        start = end
-        end = end + 1
-        j += 1
-    else:
-      partitions.append((start,end))
-    avg_embeddings = np.zeros((len(partitions),256))
-    for i, partition in enumerate(partitions):
-      avg_embeddings[i] = np.average(embeddings[partition[0]:partition[1]],axis=0) 
-    return avg_embeddings
-  
   #dataset path
-  unprocessed_data = 'wtf_timit/*/*/*/*.wav'
+  unprocessed_data = '/Users/Jimmy/baseline/wtf_timit/*/*/*/*.wav'
   audio_path = glob.glob(os.path.dirname(unprocessed_data))  
 
   total_speaker_num = len(audio_path)
@@ -273,59 +247,58 @@ if pt_file!='none':
   for i, folder in enumerate(audio_path):
     for file in os.listdir(folder):
       if file[-4:] == '.wav':
-        [signal, fs] = sf.read(folder+'/'+file)
         times, segs = VAD_chunk(2, folder+'/'+file)
         if segs == []:
           print('No voice activity detected')
           continue
-        signal = signal.astype(np.float64)
-        # Signal normalization
-        signal = signal / np.abs(np.max(signal))
-        # Remove silence
-        signal = signal[times[0][0]:times[-1][1]]
+        concat_seg = concat_segs(times, segs)
+        for seg in concat_seg:
+          # Each segment has one d vector
+          train_cluster_id.append(str(label))
+          # To calculate the segment embedding
+          segment_embeddings = []
+          
+          signal = torch.from_numpy(seg).float().cuda().contiguous()
+          # split signals into chunks
+          wlen = int(fs * 250 / 1000.00)
+          wshift = int(fs * 125 / 1000.00)
 
-        signal = torch.from_numpy(signal).float().cuda().contiguous()
+          beg_samp = 0
+          end_samp = wlen
 
-        # build inp
-        # split signals into chunks
-        wlen = int(fs * 250 / 1000.00)
-        wshift = int(fs * 125 / 1000.00)
+          N_fr = int((signal.shape[0]-wlen)/(wshift))
 
-        beg_samp = 0
-        end_samp = wlen
+          sig_arr = torch.zeros([Batch_dev, wlen]).float().cuda().contiguous()
+          count_fr = 0
+          count_fr_tot = 0
+          while end_samp < signal.shape[0]:
+            sig_arr[count_fr,:] = signal[beg_samp:end_samp]
+            beg_samp = beg_samp + wshift
+            end_samp = beg_samp + wlen
+            count_fr += 1
+            count_fr_tot += 1
+            if count_fr == Batch_dev:
+              inp = Variable(sig_arr)
+              embeddings = DNN1_net(CNN_net(inp))
+              segment_embeddings.append(embeddings)
+              
+              count_fr = 0
+              sig_arr = torch.zeros([Batch_dev,wlen]).float().cuda().contiguous()
 
-        N_fr = int((signal.shape[0]-wlen)/(wshift))
-
-        sig_arr = torch.zeros([Batch_dev, wlen]).float().cuda().contiguous()
-        count_fr = 0
-        count_fr_tot = 0
-        while end_samp < signal.shape[0]:
-          sig_arr[count_fr,:] = signal[beg_samp:end_samp]
-          beg_samp = beg_samp + wshift
-          end_samp = beg_samp + wlen
-          count_fr += 1
-          count_fr_tot += 1
-          if count_fr == Batch_dev:
-            inp = Variable(sig_arr)
+          if count_fr > 0:
+            inp = Variable(sig_arr[0:count_fr])
             embeddings = DNN1_net(CNN_net(inp))
-            aligned_embeddings = align_embeddings(embeddings.detach().numpy())
-            train_sequence.append(aligned_embeddings)
-            for embedding in aligned_embeddings:
-              train_cluster_id.append(str(label))
-            count_fr = 0
-            sig_arr = torch.zeros([Batch_dev,wlen]).float().cuda().contiguous()
+            segment_embeddings.append(embeddings)
 
-        if count_fr > 0:
-          inp = Variable(sig_arr[0:count_fr])
-          embeddings = DNN1_net(CNN_net(inp))
-          train_sequence.append(embeddings)
-          aligned_embeddings = align_embeddings(embeddings.detach().numpy())
-          train_sequence.append(aligned_embeddings)
-          for embedding in aligned_embeddings:
-            train_cluster_id.append(str(label))
-          count = count + 1
+          # Produce the segment d vector, apply L2 norm then average
+          segment_embeddings_norm2 = normalize(segment_embeddings)
+          segment_embedding = np.average(segment_embeddings_norm2, axis=0)
+          train_sequence.append(segment_embedding)
+
+        count = count + 1
         if count % 100 == 0:
-          print('Processed {0}/{1} files'.format(count, len(audio_path)))
+          print('Processed {0}/{1} files'.format(count, len(audio_path)*10))
+    
     label = label + 1
     
     if not train_saved and i > train_speaker_num:

@@ -32,6 +32,8 @@ def read_wave(path, sr):
         assert sample_rate in (8000, 16000, 32000, 48000)
         pcm_data = wf.readframes(wf.getnframes())
     data, _ = librosa.load(path, sr)
+    # Normalization
+    data = data / np.abs(np.max(data))
     assert len(data.shape) == 1
     assert sr in (8000, 16000, 32000, 48000)
     return data, pcm_data
@@ -130,7 +132,7 @@ def vad_collector(sample_rate, frame_duration_ms,
 def VAD_chunk(aggressiveness, path):
     audio, byte_audio = read_wave(path, SR)
     vad = webrtcvad.Vad(int(aggressiveness))
-    frames = frame_generator(20, byte_audio, hSR)
+    frames = frame_generator(20, byte_audio, SR)
     frames = list(frames)
     times = vad_collector(SR, 20, 200, vad, frames)
     speech_times = []
